@@ -1,0 +1,106 @@
+server:
+  port: 9040
+  context-path: /
+  session:
+    timeout: 3600
+  ssl:
+    enabled: true
+    key-store: classpath:cert/ucas-ca-server.p12
+    key-store-type: pkcs12
+    key-store-password: 335246
+    key-password: 335246
+    client-auth: need
+    trust-store: classpath:cert/ca.jks
+    trust-store-type: jks
+    trust-store-password: 155281
+
+spring:
+  application:
+    name: twa-gate
+  session:
+    store-type: none
+  aop:
+    auto: true
+  redis:
+    host: 172.17.21.59
+    password: 123456
+  data:
+    mongodb:
+      uri: mongodb://172.17.21.59:27017/ucas_ca
+
+#logging:
+#  level:
+#    root: INFO
+#    com.ucsmy.ucas: DEBUG
+#  file: logs/twa-gate.log
+
+#是否启动quartz任务扫描器
+quartz:
+  scan: false
+
+zuul:
+  ssl-hostname-validation-enabled: false
+  sensitive-headers:
+
+  prefix: /twa
+  routes:
+    login:
+      path: /oauth/accessToken
+      url: https://172.17.22.38:8444/ucas_core/
+      stripPrefix: false
+    dra-query:
+      path: /dra-query/**
+      serviceId: dra-query-mservice
+      stripPrefix: false
+    dra-core:
+      path: /dra-core/**
+      serviceId: dra-core-mservice
+      stripPrefix: false
+
+hystrix:
+  command:
+    default:
+      execution:
+        timeout:
+          enabled: true
+        isolation:
+          thread:
+            timeoutInMilliseconds: 60000
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://172.17.21.50:10010/eureka/
+  instance:
+    preferIpAddress: true
+
+crl:
+  redisPath: ucas_ca:crl:fileData
+  mongoId: crlfile
+  localPathDir: /app/dra/back/twa-gate/conf
+  localPathFile: twa.crl
+
+thirdparty:
+  auth-center:
+    url: http://172.17.21.59:8090
+    #获取access_token
+    accessToken: /ucas_core/oauth/accessToken
+    #通过access_token获取三方接口ticket
+    ticket: /ucas_core/oauth/resource/ticket/getTicket
+    #统一认证中心刷新access_token
+    refreshToken: /ucas_core/oauth/refreshToken
+
+    dra:
+      client-id: 10000026
+      client-secret: 015d-9c8886d5-0002
+      redirect-url: http://dev.dra.ucsmy.com
+      accessTokenKey: dra-access-token
+      accessTicketKey: dra-access-ticket
+      authTicketKey: dra-auth-ticket
+
+  uca-api:
+    https-host-verifier: false
+    url: https://172.17.21.59:8463
+    download-crl:
+      api: /ucas-ca/certificate/downloadCrl
+      scope: ca_cert
